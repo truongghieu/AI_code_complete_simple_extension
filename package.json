@@ -1,0 +1,129 @@
+{
+  "name": "rica",
+  "displayName": "Rica",
+  "description": "Chat with Claude AI to optimize, document, and get code suggestions",
+  "version": "1.1.3",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudeCodeAssistant.openChat",
+        "title": "Open Rica Chat"
+      },
+      {
+        "command": "claudeCodeAssistant.refreshModels",
+        "title": "Refresh Available Models"
+      },
+      {
+        "command": "claudeCodeAssistant.lazyEdit",
+        "title": "Apply Lazy Edit to Current File"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "claudeCodeAssistant.lazyEdit",
+        "key": "ctrl+l",
+        "mac": "cmd+l",
+        "when": "editorTextFocus"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claude-code-assistant",
+          "title": "Rica",
+          "icon": "media/icon.png"
+        }
+      ],
+      "panel": [
+        {
+          "id": "claude-code-assistant-panel",
+          "title": "Rica",
+          "icon": "media/icon.png"
+        }
+      ],
+      "auxiliarybar": [
+        {
+          "id": "claude-code-assistant-secondary",
+          "title": "Rica",
+          "icon": "media/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "claude-code-assistant": [
+        {
+          "id": "claudeCodeAssistantView",
+          "name": "Chat",
+          "type": "webview"
+        }
+      ],
+      "claude-code-assistant-panel": [
+        {
+          "id": "claudeCodeAssistantPanelView",
+          "name": "Chat",
+          "type": "webview"
+        }
+      ],
+      "claude-code-assistant-secondary": [
+        {
+          "id": "claudeCodeAssistantSecondaryView",
+          "name": "Chat",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Rica",
+      "properties": {
+        "claudeCodeAssistant.apiUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434",
+          "description": "URL of the API server (without trailing slash)"
+        },
+        "claudeCodeAssistant.model": {
+          "type": "string",
+          "default": "databricks-claude-sonnet-4",
+          "description": "Model name to use for API requests"
+        },
+        "claudeCodeAssistant.autoRefreshModels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh available models when the extension starts"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^14.18.63",
+    "@types/vscode": "^1.101.0",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
+    "eslint": "^7.27.0",
+    "glob": "^7.1.7",
+    "mocha": "^8.4.0",
+    "typescript": "^4.9.5",
+    "vscode-test": "^1.5.2"
+  },
+  "dependencies": {
+    "axios": "^1.10.0"
+  }
+}
