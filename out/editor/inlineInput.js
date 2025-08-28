@@ -36,13 +36,13 @@ async function showInlineInputBox(editor, placeholder = 'Enter instructions for 
         // Create a decoration type for highlighting the cursor position
         const decorationType = vscode.window.createTextEditorDecorationType({
             after: {
-                contentText: '✏️ Lazy Edit',
+                contentText: '🔍 Edit Instructions',
                 color: new vscode.ThemeColor('editorInfo.foreground'),
                 margin: '0 0 0 10px',
                 fontStyle: 'italic'
             },
             isWholeLine: true,
-            backgroundColor: new vscode.ThemeColor('editor.findMatchHighlightBackground'),
+            backgroundColor: new vscode.ThemeColor('editorInfo.background'),
             border: '1px solid ' + new vscode.ThemeColor('editor.findMatchHighlightBorder')
         });
         // Get the cursor position
@@ -54,6 +54,9 @@ async function showInlineInputBox(editor, placeholder = 'Enter instructions for 
         const inputOptions = {
             prompt: 'Lazy Edit Instructions',
             placeHolder: placeholder,
+            validateInput: value => {
+                return value && value.trim().length === 0 ? 'Input cannot be empty' : null;
+            },
             ignoreFocusOut: true
         };
         // Show the input box and wait for user input

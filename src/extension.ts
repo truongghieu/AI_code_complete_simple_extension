@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { ChatPanel } from './chatPanel';
 import { ClaudeApiClient } from './api';
+import { ChatManager } from './core/chatManager';
 import { SidebarProvider } from './sidebarProvider';
-import { registerEditerCommands } from './editer';
+import { registerEditorCommands } from './editor';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('AI Chat extension is now active!');
@@ -13,12 +13,13 @@ export function activate(context: vscode.ExtensionContext) {
   const model = config.get<string>('model') || 'databricks-claude-sonnet-4';
   const autoRefreshModels = config.get<boolean>('autoRefreshModels') || true;
 
-  // Create shared API client
+  // Create shared API client and chat manager
   const apiClient = new ClaudeApiClient(apiUrl, model);
+  const chatManager = new ChatManager(apiClient);
   
   // Auto-refresh models if enabled
   if (autoRefreshModels) {
-    apiClient.fetchAvailableModels().then(() => {
+    chatManager.fetchAvailableModels().then(() => {
       console.log('Available models refreshed on startup');
     }).catch(err => {
       console.error('Failed to refresh models on startup:', err);
@@ -26,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   // Register sidebar provider for activity bar view
-  const sidebarProvider = new SidebarProvider(context.extensionUri);
+  const sidebarProvider = new SidebarProvider(context.extensionUri, chatManager);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       "claudeCodeAssistantView", 
@@ -35,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   
   // Register sidebar provider for panel view
-  const panelProvider = new SidebarProvider(context.extensionUri);
+  const panelProvider = new SidebarProvider(context.extensionUri, chatManager);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       "claudeCodeAssistantPanelView", 
@@ -44,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   
   // Register sidebar provider for secondary sidebar view
-  const secondarySidebarProvider = new SidebarProvider(context.extensionUri);
+  const secondarySidebarProvider = new SidebarProvider(context.extensionUri, chatManager);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       "claudeCodeAssistantSecondaryView", 
@@ -57,7 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('claudeCodeAssistant.refreshModels', async () => {
       try {
         vscode.window.setStatusBarMessage('$(loading~spin) Refreshing available models...', 5000);
-        await apiClient.fetchAvailableModels();
+        await chatManager.fetchAvailableModels();
         vscode.window.showInformationMessage('Models refreshed successfully');
       } catch (error) {
         vscode.window.showErrorMessage('Failed to refresh models');
@@ -66,13 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Register command to open chat panel
-  context.subscriptions.push(
-    vscode.commands.registerCommand('claudeCodeAssistant.openChat', () => {
-      ChatPanel.createOrShow(context.extensionUri);
-    })
-  );
   
-  // Register editer commands
-  registerEditerCommands(context, apiClient);
+  // Register editor commands
+  registerEditorCommands(context, apiClient);
 }

@@ -23,69 +23,44 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChatPanel = void 0;
+exports.BaseWebviewProvider = void 0;
 const vscode = __importStar(require("vscode"));
-const htmlRenderer_1 = require("./ui/htmlRenderer");
-class ChatPanel {
-    constructor(panel, chatManager) {
+const htmlRenderer_1 = require("./htmlRenderer");
+/**
+ * Base class for webview providers that use chat functionality
+ */
+class BaseWebviewProvider {
+    constructor(_extensionUri, chatManager) {
+        this._extensionUri = _extensionUri;
         this._disposables = [];
-        this._panel = panel;
         this._chatManager = chatManager;
-        // Set initial content
-        this._updateWebview();
-        // Fetch available models
-        this._chatManager.fetchAvailableModels().then(() => {
-            this._updateWebview();
-        });
-        // Listen for when the panel is disposed
-        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-        // Handle messages from the webview
-        this._panel.webview.onDidReceiveMessage(async (message) => {
+    }
+    setupWebviewMessageHandling(webview, onUpdate) {
+        webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
                 case 'sendMessage':
                     await this._chatManager.handleUserMessage(message.text, message.task);
-                    this._updateWebview();
+                    onUpdate();
                     break;
                 case 'insertCode':
-                    this._insertCodeToEditor(message.code);
+                    this.insertCodeToEditor(message.code);
                     break;
                 case 'selectModel':
                     await this._chatManager.handleModelSelection(message.model);
-                    this._updateWebview();
+                    onUpdate();
                     break;
                 case 'refreshModels':
                     await this._chatManager.fetchAvailableModels();
-                    this._updateWebview();
+                    onUpdate();
                     break;
                 case 'clearHistory':
                     this._chatManager.clearMessages();
-                    this._updateWebview();
+                    onUpdate();
                     break;
             }
         }, null, this._disposables);
     }
-    /**
-     * Set the lazy edit state
-     */
-    setLazyEditState(code, language, editor, selection) {
-        this._chatManager.setLazyEditState(code, language, editor, selection);
-        this._updateWebview();
-    }
-    static createOrShow(extensionUri, chatManager) {
-        const column = vscode.window.activeTextEditor ? vscode.ViewColumn.Beside : vscode.ViewColumn.One;
-        // If the panel already exists, reveal it
-        if (ChatPanel.currentPanel) {
-            ChatPanel.currentPanel._panel.reveal(column);
-            return;
-        }
-        // Otherwise, create a new panel
-        const panel = vscode.window.createWebviewPanel('claudeChatView', 'Rica', column, {
-            enableScripts: true,
-            localResourceRoots: [extensionUri]
-        });
-        ChatPanel.currentPanel = new ChatPanel(panel, chatManager);
-    }
-    _insertCodeToEditor(code) {
+    insertCodeToEditor(code) {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             editor.edit(editBuilder => {
@@ -98,19 +73,12 @@ class ChatPanel {
             });
         }
     }
-    _updateWebview() {
-        this._panel.webview.html = this._getWebviewContent();
-    }
-    _getWebviewContent() {
+    generateWebviewHtml() {
         return htmlRenderer_1.HtmlRenderer.generateChatHtml(this._chatManager.modelSelectorState, this._chatManager.apiClient, this._chatManager.messages);
     }
     dispose() {
-        ChatPanel.currentPanel = undefined;
-        if (this._panel) {
-            // Proper cleanup code here
-        }
         this._disposables.forEach((disposable) => disposable.dispose());
     }
 }
-exports.ChatPanel = ChatPanel;
-//# sourceMappingURL=chatPanel.js.map
+exports.BaseWebviewProvider = BaseWebviewProvider;
+//# sourceMappingURL=baseWebviewProvider.js.map

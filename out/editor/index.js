@@ -23,18 +23,23 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.registerEditerCommands = void 0;
+exports.registerEditorCommands = void 0;
 const vscode = __importStar(require("vscode"));
-const chatPanel_1 = require("../chatPanel");
 const utils_1 = require("../utils");
 const lazyEdit_1 = require("./lazyEdit");
 const inlineInput_1 = require("./inlineInput");
+const ghostCompletion_1 = require("./ghostCompletion");
 /**
- * Register the editer commands
+ * Register the editor commands
  * @param context The extension context
- * @param apiClient The API client to use for the editer
+ * @param apiClient The API client to use for the editor
  */
-function registerEditerCommands(context, apiClient) {
+function registerEditorCommands(context, apiClient) {
+    // Initialize ghost completion manager
+    const ghostCompletionManager = ghostCompletion_1.GhostCompletionManager.getInstance(apiClient);
+    context.subscriptions.push({
+        dispose: () => ghostCompletionManager.dispose()
+    });
     // Register the lazy edit command
     const lazyEditCommand = vscode.commands.registerCommand('claudeCodeAssistant.lazyEdit', async () => {
         const editor = vscode.window.activeTextEditor;
@@ -57,44 +62,36 @@ function registerEditerCommands(context, apiClient) {
         }
         // Get language ID
         const language = (0, utils_1.getLanguageId)(document.languageId);
-        // Check if chat panel is already open
-        if (chatPanel_1.ChatPanel.currentPanel) {
-            // If chat panel is open, use it
-            chatPanel_1.ChatPanel.createOrShow(context.extensionUri);
-            chatPanel_1.ChatPanel.currentPanel.setLazyEditState(code, language, editor, selection);
-        }
-        else {
-            // If chat panel is not open, show an inline input box at the cursor position
-            const userInput = await (0, inlineInput_1.showInlineInputBox)(editor, 'e.g., Refactor this code to use async/await');
-            if (userInput) {
-                // Show progress notification
-                vscode.window.withProgress({
-                    location: vscode.ProgressLocation.Notification,
-                    title: 'Applying lazy edit...',
-                    cancellable: true
-                }, async (progress, token) => {
-                    progress.report({ message: 'Processing your request...' });
-                    // Apply the lazy edit directly with user instructions
-                    const result = await (0, lazyEdit_1.applyLazyEdit)(apiClient, {
-                        editor,
-                        selection,
-                        languageId: language,
-                        entireDocument: selection.isEmpty,
-                        userInstructions: userInput
-                    });
-                    if (result.success) {
-                        vscode.window.showInformationMessage('Lazy edit applied successfully!');
-                    }
-                    else {
-                        vscode.window.showErrorMessage(`Failed to apply lazy edit: ${result.error}`);
-                    }
+        // Show an inline input box at the cursor position
+        const userInput = await (0, inlineInput_1.showInlineInputBox)(editor, 'e.g., Refactor this code to use async/await');
+        if (userInput) {
+            // Show progress notification
+            vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Applying lazy edit...',
+                cancellable: true
+            }, async (progress, token) => {
+                progress.report({ message: 'Processing your request...' });
+                // Apply the lazy edit directly with user instructions
+                const result = await (0, lazyEdit_1.applyLazyEdit)(apiClient, {
+                    editor,
+                    selection,
+                    languageId: language,
+                    entireDocument: selection.isEmpty,
+                    userInstructions: userInput
                 });
-            }
+                if (result.success) {
+                    vscode.window.showInformationMessage('Lazy edit applied successfully!');
+                }
+                else {
+                    vscode.window.showErrorMessage(`Failed to apply lazy edit: ${result.error}`);
+                }
+            });
         }
     });
     // Add the command to the context
     context.subscriptions.push(lazyEditCommand);
 }
-exports.registerEditerCommands = registerEditerCommands;
+exports.registerEditorCommands = registerEditorCommands;
 // No exports needed
 //# sourceMappingURL=index.js.map

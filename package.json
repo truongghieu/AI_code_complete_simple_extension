@@ -1,7 +1,7 @@
 {
   "name": "rica",
   "displayName": "Rica",
-  "description": "Chat with Claude AI to optimize, document, and get code suggestions",
+  "description": "AI to optimize, document, and get code suggestions",
   "version": "1.1.3",
   "icon": "media/icon.png",
   "engines": {
@@ -15,16 +15,20 @@
   "contributes": {
     "commands": [
       {
-        "command": "claudeCodeAssistant.openChat",
-        "title": "Open Rica Chat"
-      },
-      {
         "command": "claudeCodeAssistant.refreshModels",
         "title": "Refresh Available Models"
       },
       {
         "command": "claudeCodeAssistant.lazyEdit",
         "title": "Apply Lazy Edit to Current File"
+      },
+      {
+        "command": "claudeCodeAssistant.acceptGhostCompletion",
+        "title": "Accept AI Ghost Completion"
+      },
+      {
+        "command": "claudeCodeAssistant.dismissGhostCompletion",
+        "title": "Dismiss AI Ghost Completion"
       }
     ],
     "keybindings": [
@@ -33,6 +37,16 @@
         "key": "ctrl+l",
         "mac": "cmd+l",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "claudeCodeAssistant.acceptGhostCompletion",
+        "key": "tab",
+        "when": "editorTextFocus && claudeCodeAssistant.ghostCompletionVisible"
+      },
+      {
+        "command": "claudeCodeAssistant.dismissGhostCompletion",
+        "key": "escape",
+        "when": "editorTextFocus && claudeCodeAssistant.ghostCompletionVisible"
       }
     ],
     "viewsContainers": {
